@@ -1,0 +1,22 @@
+[package]
+name = "creditcoin-authority-manager"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+async-trait = "0.1.53"
+clap = { version = "3.1.18", features = ["derive"] }
+color-eyre = "0.6.1"
+extend = "1.1.2"
+futures = "0.3.21"
+hex = "0.4.3"
+maplit = "1.0.2"
+parity-scale-codec = "3.1.2"
+serde_json = "1.0.81"
+sp-core = "6.0.0"
+strum = { version = "0.24.0", features = ["derive"] }
+subxt = "0.21.0"
+tabled = { version = "0.6.1", features = ["color"] }
+tokio = { version = "1.18.2", features = ["full"] }
