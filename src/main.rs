@@ -31,40 +31,54 @@ struct Cli {
 
 #[derive(Debug, Clone, Subcommand)]
 enum Commands {
+    /// Get the currently configured RPC URL for a given blockchain.
     Get(GetArgs),
+    /// Set the RPC URL to use for a given blockchain.
     Set(SetArgs),
+    /// Insert an (authority) key into the keystore.
     Insert(InsertArgs),
     #[clap(name = "log-filter", subcommand)]
+    /// Operations on log filters.
     LogFilter(LogFilterCommand),
+    /// Retrieves the account ID of the authority, if one exists
     Account,
+    /// Lists the configured RPC URLs for all blockchains.
     List,
 }
 
 #[derive(Debug, Clone, Args)]
 struct GetArgs {
+    /// The name of the blockchain to get the RPC URL for.
     blockchain: Blockchain,
 }
 
 #[derive(Debug, Clone, Args)]
 struct SetArgs {
+    /// The blockchain to set the RPC URL for.
     blockchain: Blockchain,
+    /// The RPC URL.
     rpc_url: String,
 }
 
 #[derive(Debug, Clone, Args)]
 struct InsertArgs {
+    /// The mnemonic phrase of the key to insert.
     suri: String,
+    /// The hex encoded public key of the key to insert.
     public_hex: String,
 }
 
 #[derive(Debug, Clone, Subcommand)]
 enum LogFilterCommand {
+    /// Add a new log filter directive.
     Add(AddLogFilterArgs),
+    /// Reset the log filter to default.
     Reset(ResetLogFilterArgs),
 }
 
 #[derive(Debug, Clone, Args)]
 struct AddLogFilterArgs {
+    /// The log filter directive to add.
     filter: String,
 }
 
