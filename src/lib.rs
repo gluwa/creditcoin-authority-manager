@@ -1,3 +1,5 @@
+#![allow(clippy::too_many_arguments)]
+
 use subxt::{
     extrinsic::{BaseExtrinsicParams, PlainTip},
     DefaultConfig,
