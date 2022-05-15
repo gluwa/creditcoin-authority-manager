@@ -34,9 +34,10 @@ enum Commands {
     Get(GetArgs),
     Set(SetArgs),
     Insert(InsertArgs),
+    #[clap(name = "log-filter", subcommand)]
+    LogFilter(LogFilterCommand),
     Account,
     List,
-    Setup,
 }
 
 #[derive(Debug, Clone, Args)]
@@ -56,30 +57,76 @@ struct InsertArgs {
     public_hex: String,
 }
 
+#[derive(Debug, Clone, Subcommand)]
+enum LogFilterCommand {
+    Add(AddLogFilterArgs),
+    Reset(ResetLogFilterArgs),
+}
+
+#[derive(Debug, Clone, Args)]
+struct AddLogFilterArgs {
+    filter: String,
+}
+
+#[async_trait]
+impl Run for AddLogFilterArgs {
+    async fn run(self, api: &RuntimeApi) -> Result<()> {
+        let Self { filter } = self;
+
+        api.client.rpc().add_log_filter(filter.clone()).await?;
+        println!("Added log filter directive {}", filter);
+        Ok(())
+    }
+}
+
+#[async_trait]
+impl Run for ResetLogFilterArgs {
+    async fn run(self, api: &RuntimeApi) -> Result<()> {
+        api.client.rpc().reset_log_filter().await?;
+        println!("Reset log filter to default");
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone, Args)]
+struct ResetLogFilterArgs;
+
 #[async_trait]
 trait Run {
-    async fn run(self, client: &RuntimeApi) -> Result<()>;
+    async fn run(self, api: &RuntimeApi) -> Result<()>;
+}
+
+#[async_trait]
+impl Run for LogFilterCommand {
+    async fn run(self, api: &RuntimeApi) -> Result<()> {
+        match self {
+            LogFilterCommand::Add(args) => args.run(api).await,
+            LogFilterCommand::Reset(args) => args.run(api).await,
+        }
+    }
+}
+
+async fn authority_account_command(api: &RuntimeApi) -> Result<()> {
+    println!(
+        "{}",
+        match authority_account(api).await? {
+            Some(acct) => acct.to_ss58check(),
+            None => "No authority account found".into(),
+        }
+    );
+    Ok(())
 }
 
 #[async_trait]
 impl Run for Commands {
-    async fn run(self, client: &RuntimeApi) -> Result<()> {
+    async fn run(self, api: &RuntimeApi) -> Result<()> {
         match self {
-            Commands::Get(get) => get.run(client).await,
-            Commands::Set(set) => set.run(client).await,
-            Commands::Insert(insert) => insert.run(client).await,
-            Commands::List => list(client).await,
-            Commands::Account => {
-                println!(
-                    "{}",
-                    match authority_account(client).await? {
-                        Some(acct) => acct.to_ss58check(),
-                        None => "No authority account found".into(),
-                    }
-                );
-                Ok(())
-            }
-            Commands::Setup => todo!(),
+            Commands::Get(get) => get.run(api).await,
+            Commands::Set(set) => set.run(api).await,
+            Commands::Insert(insert) => insert.run(api).await,
+            Commands::List => list(api).await,
+            Commands::Account => authority_account_command(api).await,
+            Commands::LogFilter(log_filter) => log_filter.run(api).await,
         }
     }
 }
@@ -92,9 +139,9 @@ struct RpcConfig {
     url: String,
 }
 
-async fn list(client: &RuntimeApi) -> Result<()> {
+async fn list(api: &RuntimeApi) -> Result<()> {
     let foo = Blockchain::iter().map(|blockchain| {
-        get(client, blockchain).map(move |url| url.map(|url| RpcConfig { blockchain, url }))
+        get(api, blockchain).map(move |url| url.map(|url| RpcConfig { blockchain, url }))
     });
     let configs = futures::future::try_join_all(foo).await?.table();
     println!("{configs}");
@@ -141,10 +188,10 @@ async fn authority_account(api: &RuntimeApi) -> Result<Option<AccountId32>> {
 
 #[async_trait]
 impl Run for GetArgs {
-    async fn run(self, client: &RuntimeApi) -> Result<()> {
+    async fn run(self, api: &RuntimeApi) -> Result<()> {
         let Self { blockchain } = self;
 
-        let value = get(client, blockchain).await?;
+        let value = get(api, blockchain).await?;
 
         println!("{value}");
         Ok(())
@@ -294,6 +341,17 @@ impl<T: Config> Rpc<T> {
         self.client
             .request("offchain_localStorageSet", params)
             .await?;
+        Ok(())
+    }
+
+    async fn add_log_filter(&self, filter: String) -> Result<(), BasicError> {
+        let params = rpc_params![filter];
+        self.client.request("system_addLogFilter", params).await?;
+        Ok(())
+    }
+
+    async fn reset_log_filter(&self) -> Result<(), BasicError> {
+        self.client.request("system_resetLogFilter", None).await?;
         Ok(())
     }
 }
