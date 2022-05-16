@@ -248,7 +248,7 @@ impl Run for InsertArgs {
         } = self;
         let client = &api.client;
 
-        let public_bytes = Bytes(hex::decode(&public_hex)?);
+        let public_bytes = Bytes(hex::decode(&public_hex.trim_start_matches("0x"))?);
 
         client
             .rpc()
