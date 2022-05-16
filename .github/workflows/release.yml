@@ -1,0 +1,32 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  build:
+    name: Publish binaries
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+      - uses: Swatinem/rust-cache@v1.3.0
+      - name: Build Linux Binary
+        uses: Shogan/rust-musl-action@v1.0.2
+        with:
+          args: cargo build --target x86_64-unknown-linux-musl --release
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: target/x86_64-unknown-linux-musl/release/creditcoin-authority-manager
+          asset_name: creditcoin-authority-manager
+          tag: ${{ github.ref }}
+          overwrite: true
