@@ -1,6 +1,6 @@
 [package]
 name = "creditcoin-authority-manager"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -17,6 +17,6 @@ parity-scale-codec = "3.1.2"
 regex = "1.6.0"
 sp-core = "6.0.0"
 strum = { version = "0.24.0", features = ["derive"] }
-subxt = "0.21.0"
-tabled = { version = "0.6.1", features = ["color"] }
+subxt = "0.22.0"
+tabled = { version = "0.8.0", features = ["color"] }
 tokio = { version = "1.18.2", features = ["full"] }
