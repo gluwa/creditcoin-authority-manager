@@ -8,7 +8,9 @@ use color_eyre::Result;
 use creditcoin_authority_manager::RuntimeApi;
 use extend::ext;
 use futures::FutureExt;
+use once_cell::sync::Lazy;
 use parity_scale_codec::{Decode, Encode};
+use regex::{Regex, RegexBuilder};
 use sp_core::{
     crypto::{AccountId32, Ss58Codec},
     storage::{StorageData, StorageKey},
@@ -268,6 +270,7 @@ enum Blockchain {
     Rinkeby,
     Luniverse,
     Bitcoin,
+    Evm(u64),
 }
 
 impl fmt::Display for Blockchain {
@@ -277,6 +280,7 @@ impl fmt::Display for Blockchain {
             Blockchain::Rinkeby => write!(f, "Rinkeby"),
             Blockchain::Luniverse => write!(f, "Luniverse"),
             Blockchain::Bitcoin => write!(f, "Bitcoin"),
+            Blockchain::Evm(chain_id) => write!(f, "EVM-{chain_id}"),
         }
     }
 }
@@ -290,7 +294,20 @@ impl FromStr for Blockchain {
             "rinkeby" => Ok(Blockchain::Rinkeby),
             "luniverse" => Ok(Blockchain::Luniverse),
             "bitcoin" => Ok(Blockchain::Bitcoin),
-            _ => Err(color_eyre::eyre::eyre!("unknown blockchain: {}", s)),
+            other => {
+                static EVM_REGEX: Lazy<Regex> = Lazy::new(|| {
+                    RegexBuilder::new(r"evm\-(\d+)")
+                        .case_insensitive(true)
+                        .build()
+                        .unwrap()
+                });
+
+                if let Some(captures) = EVM_REGEX.captures(other) {
+                    Ok(Blockchain::Evm(captures.get(1).unwrap().as_str().parse()?))
+                } else {
+                    Err(color_eyre::eyre::eyre!("unknown blockchain: {other}"))
+                }
+            }
         }
     }
 }
