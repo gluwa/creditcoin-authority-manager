@@ -1,12 +1,12 @@
-use crate::misc::StorageKind;
-use crate::misc::{url_to_value, Blockchain};
+use crate::misc::{url_to_value, Blockchain, StorageKind};
 use crate::RpcTExt;
+use crate::Run;
+use crate::RunResult;
 use crate::RuntimeApi;
 use async_trait::async_trait;
 use clap::Args;
 use color_eyre::Result;
 use parity_scale_codec::Decode;
-use crate::Run;
 
 #[derive(Debug, Clone, Args)]
 pub struct GetArgs {
@@ -24,7 +24,7 @@ pub struct SetArgs {
 
 #[async_trait]
 impl Run for GetArgs {
-    async fn run(self, api: &RuntimeApi) -> Result<()> {
+    async fn run(self, api: &RuntimeApi) -> RunResult {
         let Self { blockchain } = self;
 
         let value = get(api, blockchain).await?;
@@ -36,7 +36,7 @@ impl Run for GetArgs {
 
 #[async_trait]
 impl Run for SetArgs {
-    async fn run(self, api: &RuntimeApi) -> Result<()> {
+    async fn run(self, api: &RuntimeApi) -> RunResult {
         let Self {
             blockchain,
             rpc_url,

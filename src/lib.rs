@@ -8,8 +8,6 @@ use subxt::{
 };
 #[subxt::subxt(runtime_metadata_path = "./creditcoin-metadata.scale")]
 pub mod creditcoin {}
-pub type CreditcoinExtrinsicParams = BaseExtrinsicParams<DefaultConfig, PlainTip>;
-pub type RuntimeApi = creditcoin::RuntimeApi<DefaultConfig, CreditcoinExtrinsicParams>;
 use misc::{StorageData, StorageKey, StorageKind};
 use subxt::{
     rpc::{rpc_params, ClientT, Rpc},
@@ -17,6 +15,10 @@ use subxt::{
 };
 pub mod commands;
 pub mod misc;
+
+pub type CreditcoinExtrinsicParams = BaseExtrinsicParams<DefaultConfig, PlainTip>;
+pub type RuntimeApi = creditcoin::RuntimeApi<DefaultConfig, CreditcoinExtrinsicParams>;
+pub type RunResult = Result<()>;
 
 #[ext]
 #[async_trait]
@@ -61,5 +63,5 @@ pub impl<T: Config> Rpc<T> {
 
 #[async_trait]
 pub trait Run {
-    async fn run(self, api: &RuntimeApi) -> Result<()>;
+    async fn run(self, api: &RuntimeApi) -> RunResult;
 }

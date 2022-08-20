@@ -1,5 +1,6 @@
 use crate::misc::Blockchain;
 use crate::Run;
+use crate::RunResult;
 use crate::RuntimeApi;
 use async_trait::async_trait;
 use clap::{Args, Subcommand};
@@ -42,7 +43,7 @@ pub struct InsertArgs {
     public_hex: String,
 }
 
-async fn authority_account_command(api: &RuntimeApi) -> Result<()> {
+async fn authority_account_command(api: &RuntimeApi) -> RunResult {
     println!(
         "{}",
         match authority_account(api).await? {
@@ -55,7 +56,7 @@ async fn authority_account_command(api: &RuntimeApi) -> Result<()> {
 
 #[async_trait]
 impl Run for Commands {
-    async fn run(self, api: &RuntimeApi) -> Result<()> {
+    async fn run(self, api: &RuntimeApi) -> RunResult {
         match self {
             Commands::Get(get) => get.run(api).await,
             Commands::Set(set) => set.run(api).await,
@@ -75,7 +76,7 @@ struct RpcConfig {
     url: String,
 }
 
-async fn list(api: &RuntimeApi) -> Result<()> {
+async fn list(api: &RuntimeApi) -> RunResult {
     let url_requests = Blockchain::iter().map(|blockchain| {
         get(api, blockchain).map(move |url| url.map(|url| RpcConfig { blockchain, url }))
     });
@@ -107,7 +108,7 @@ async fn authority_account(api: &RuntimeApi) -> Result<Option<AccountId32>> {
 
 #[async_trait]
 impl Run for InsertArgs {
-    async fn run(self, api: &RuntimeApi) -> Result<()> {
+    async fn run(self, api: &RuntimeApi) -> RunResult {
         let Self {
             suri, public_hex, ..
         } = self;
