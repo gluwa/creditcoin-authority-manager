@@ -1,8 +1,9 @@
-use crate::misc::{url_to_value, Blockchain, StorageKind};
+use crate::misc::{url_to_value, Blockchain};
 use crate::RpcTExt;
 use crate::Run;
 use crate::RunResult;
 use crate::RuntimeApi;
+use crate::StorageKind;
 use async_trait::async_trait;
 use clap::Args;
 use color_eyre::Result;
@@ -46,13 +47,13 @@ impl Run for SetArgs {
 
         client
             .rpc()
-            .set_offchain_storage(StorageKind::Persistent, &key, &url_to_value(&rpc_url))
+            .set_offchain_storage(StorageKind::PERSISTENT, &key, &url_to_value(&rpc_url))
             .await?;
 
         assert_eq!(
             client
                 .rpc()
-                .offchain_storage(StorageKind::Persistent, &key)
+                .offchain_storage(StorageKind::PERSISTENT, &key)
                 .await?,
             Some(url_to_value(&rpc_url))
         );

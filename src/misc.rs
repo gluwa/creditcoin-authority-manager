@@ -7,25 +7,6 @@ pub use sp_core::storage::{StorageData, StorageKey};
 use std::str::FromStr;
 use strum::EnumIter;
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum StorageKind {
-    #[allow(dead_code)]
-    Local,
-    Persistent,
-}
-
-impl fmt::Display for StorageKind {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                StorageKind::Local => "LOCAL",
-                StorageKind::Persistent => "PERSISTENT",
-            }
-        )
-    }
-}
 impl Blockchain {
     pub fn to_key(self) -> StorageKey {
         StorageKey(

@@ -8,7 +8,8 @@ use subxt::{
 };
 #[subxt::subxt(runtime_metadata_path = "./creditcoin-metadata.scale")]
 pub mod creditcoin {}
-use misc::{StorageData, StorageKey, StorageKind};
+use misc::{StorageData, StorageKey};
+use sp_core::offchain::StorageKind;
 use subxt::{
     rpc::{rpc_params, ClientT, Rpc},
     BasicError, Config,
