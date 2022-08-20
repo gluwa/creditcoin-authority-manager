@@ -30,7 +30,7 @@ impl Run for GetArgs {
 
         let value = get(api, blockchain).await?;
 
-        println!("{value}");
+        println!("{value:?}");
         Ok(())
     }
 }
@@ -63,7 +63,7 @@ impl Run for SetArgs {
     }
 }
 
-pub async fn get(api: &RuntimeApi, blockchain: Blockchain) -> Result<String> {
+pub async fn get(api: &RuntimeApi, blockchain: Blockchain) -> Result<Option<String>> {
     let key = blockchain.to_key();
 
     let value = api
@@ -73,8 +73,8 @@ pub async fn get(api: &RuntimeApi, blockchain: Blockchain) -> Result<String> {
         .await?;
 
     let value = match value {
-        Some(value) => String::decode(&mut value.0.as_slice())?,
-        None => "None".to_string(),
+        Some(value) => Some(String::decode(&mut value.0.as_slice())?),
+        None => None,
     };
 
     Ok(value)

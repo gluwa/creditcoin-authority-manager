@@ -79,8 +79,14 @@ struct RpcConfig {
 
 async fn list(api: &RuntimeApi) -> RunResult {
     let url_requests = Blockchain::iter().map(|blockchain| {
-        get(api, blockchain).map(move |url| url.map(|url| RpcConfig { blockchain, url }))
+        get(api, blockchain).map(move |item| {
+            item.map(|o| RpcConfig {
+                blockchain,
+                url: o.unwrap_or_else(|| "None".into()),
+            })
+        })
     });
+
     let configs = futures::future::try_join_all(url_requests).await?.table();
     println!("{configs}");
     Ok(())
