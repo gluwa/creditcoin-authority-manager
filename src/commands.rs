@@ -57,13 +57,14 @@ async fn authority_account_command(api: &RuntimeApi) -> RunResult {
 #[async_trait]
 impl Run for Commands {
     async fn run(self, api: &RuntimeApi) -> RunResult {
+        use Commands::*;
         match self {
-            Commands::Get(get) => get.run(api).await,
-            Commands::Set(set) => set.run(api).await,
-            Commands::Insert(insert) => insert.run(api).await,
-            Commands::List => list(api).await,
-            Commands::Account => authority_account_command(api).await,
-            Commands::LogFilter(log_filter) => log_filter.run(api).await,
+            Get(get) => get.run(api).await,
+            Set(set) => set.run(api).await,
+            Insert(insert) => insert.run(api).await,
+            List => list(api).await,
+            Account => authority_account_command(api).await,
+            LogFilter(log_filter) => log_filter.run(api).await,
         }
     }
 }
