@@ -29,7 +29,7 @@ pub impl<T: Config> Rpc<T> {
         storage_kind: StorageKind,
         key: &StorageKey,
     ) -> Result<Option<StorageData>, BasicError> {
-        let params = rpc_params![storage_kind.to_string(), key];
+        let params = rpc_params![storage_kind, key];
         let data = self
             .client
             .request("offchain_localStorageGet", params)
@@ -43,7 +43,7 @@ pub impl<T: Config> Rpc<T> {
         key: &StorageKey,
         value: &StorageData,
     ) -> Result<(), BasicError> {
-        let params = rpc_params![storage_kind.to_string(), key, value];
+        let params = rpc_params![storage_kind, key, value];
         self.client
             .request("offchain_localStorageSet", params)
             .await?;

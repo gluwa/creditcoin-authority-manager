@@ -69,7 +69,7 @@ pub async fn get(api: &RuntimeApi, blockchain: Blockchain) -> Result<String> {
     let value = api
         .client
         .rpc()
-        .offchain_storage(StorageKind::Persistent, &key)
+        .offchain_storage(StorageKind::PERSISTENT, &key)
         .await?;
 
     let value = match value {

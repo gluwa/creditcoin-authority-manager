@@ -397,7 +397,7 @@ dependencies = [
 
 [[package]]
 name = "creditcoin-authority-manager"
-version = "0.1.2"
+version = "0.2.0"
 dependencies = [
  "async-trait",
  "clap",
@@ -409,6 +409,7 @@ dependencies = [
  "parity-scale-codec",
  "regex",
  "sp-core",
+ "sp-tracing",
  "strum",
  "subxt",
  "tabled",
