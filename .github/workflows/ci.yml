@@ -25,3 +25,15 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: check
+
+  shellcheck:
+    name: "🐚 Shellcheck"
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+    - name: Run ShellCheck
+      uses: ludeeus/action-shellcheck@1.1.0
+      env:
+        SHELLCHECK_OPTS: -e SC2002 # allow useless cats to live inside our codebase
