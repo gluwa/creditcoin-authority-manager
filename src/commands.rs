@@ -35,7 +35,7 @@ pub enum Commands {
     Account,
     /// Lists the configured RPC URLs for all blockchains.
     List,
-    /// Offchian Nonce directives.
+    /// Offchain Nonce directives.
     #[clap(subcommand)]
     Nonce(NonceCommand),
 }
