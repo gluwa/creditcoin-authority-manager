@@ -16,6 +16,8 @@ struct Cli {
 async fn main() -> Result<()> {
     color_eyre::install()?;
 
+    sp_tracing::try_init_simple();
+
     let cli = Cli::parse();
     let client = ClientBuilder::new()
         .set_url(&cli.url)

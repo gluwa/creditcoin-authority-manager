@@ -1,9 +1,9 @@
 use crate::RpcTExt;
 use crate::Run;
+use crate::RunResult;
 use crate::RuntimeApi;
 use async_trait::async_trait;
 use clap::{Args, Subcommand};
-use color_eyre::Result;
 
 #[derive(Debug, Clone, Subcommand)]
 pub enum LogFilterCommand {
@@ -21,7 +21,7 @@ pub struct AddLogFilterArgs {
 
 #[async_trait]
 impl Run for AddLogFilterArgs {
-    async fn run(self, api: &RuntimeApi) -> Result<()> {
+    async fn run(self, api: &RuntimeApi) -> RunResult {
         let Self { filter } = self;
 
         api.client.rpc().add_log_filter(filter.clone()).await?;
@@ -32,7 +32,7 @@ impl Run for AddLogFilterArgs {
 
 #[async_trait]
 impl Run for ResetLogFilterArgs {
-    async fn run(self, api: &RuntimeApi) -> Result<()> {
+    async fn run(self, api: &RuntimeApi) -> RunResult {
         api.client.rpc().reset_log_filter().await?;
         println!("Reset log filter to default");
         Ok(())
@@ -44,7 +44,7 @@ pub struct ResetLogFilterArgs;
 
 #[async_trait]
 impl Run for LogFilterCommand {
-    async fn run(self, api: &RuntimeApi) -> Result<()> {
+    async fn run(self, api: &RuntimeApi) -> RunResult {
         match self {
             LogFilterCommand::Add(args) => args.run(api).await,
             LogFilterCommand::Reset(args) => args.run(api).await,

@@ -1,5 +1,6 @@
 use crate::misc::Blockchain;
 use crate::Run;
+use crate::RunResult;
 use crate::RuntimeApi;
 use async_trait::async_trait;
 use clap::{Args, Subcommand};
@@ -42,7 +43,7 @@ pub struct InsertArgs {
     public_hex: String,
 }
 
-async fn authority_account_command(api: &RuntimeApi) -> Result<()> {
+async fn authority_account_command(api: &RuntimeApi) -> RunResult {
     println!(
         "{}",
         match authority_account(api).await? {
@@ -55,14 +56,15 @@ async fn authority_account_command(api: &RuntimeApi) -> Result<()> {
 
 #[async_trait]
 impl Run for Commands {
-    async fn run(self, api: &RuntimeApi) -> Result<()> {
+    async fn run(self, api: &RuntimeApi) -> RunResult {
+        use Commands::*;
         match self {
-            Commands::Get(get) => get.run(api).await,
-            Commands::Set(set) => set.run(api).await,
-            Commands::Insert(insert) => insert.run(api).await,
-            Commands::List => list(api).await,
-            Commands::Account => authority_account_command(api).await,
-            Commands::LogFilter(log_filter) => log_filter.run(api).await,
+            Get(get) => get.run(api).await,
+            Set(set) => set.run(api).await,
+            Insert(insert) => insert.run(api).await,
+            List => list(api).await,
+            Account => authority_account_command(api).await,
+            LogFilter(log_filter) => log_filter.run(api).await,
         }
     }
 }
@@ -75,10 +77,16 @@ struct RpcConfig {
     url: String,
 }
 
-async fn list(api: &RuntimeApi) -> Result<()> {
+async fn list(api: &RuntimeApi) -> RunResult {
     let url_requests = Blockchain::iter().map(|blockchain| {
-        get(api, blockchain).map(move |url| url.map(|url| RpcConfig { blockchain, url }))
+        get(api, blockchain).map(move |item| {
+            item.map(|o| RpcConfig {
+                blockchain,
+                url: o.unwrap_or_else(|| "None".into()),
+            })
+        })
     });
+
     let configs = futures::future::try_join_all(url_requests).await?.table();
     println!("{configs}");
     Ok(())
@@ -107,7 +115,7 @@ async fn authority_account(api: &RuntimeApi) -> Result<Option<AccountId32>> {
 
 #[async_trait]
 impl Run for InsertArgs {
-    async fn run(self, api: &RuntimeApi) -> Result<()> {
+    async fn run(self, api: &RuntimeApi) -> RunResult {
         let Self {
             suri, public_hex, ..
         } = self;

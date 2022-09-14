@@ -8,15 +8,18 @@ use subxt::{
 };
 #[subxt::subxt(runtime_metadata_path = "./creditcoin-metadata.scale")]
 pub mod creditcoin {}
-pub type CreditcoinExtrinsicParams = BaseExtrinsicParams<DefaultConfig, PlainTip>;
-pub type RuntimeApi = creditcoin::RuntimeApi<DefaultConfig, CreditcoinExtrinsicParams>;
-use misc::{StorageData, StorageKey, StorageKind};
+use misc::{StorageData, StorageKey};
+use sp_core::offchain::StorageKind;
 use subxt::{
     rpc::{rpc_params, ClientT, Rpc},
     BasicError, Config,
 };
 pub mod commands;
 pub mod misc;
+
+pub type CreditcoinExtrinsicParams = BaseExtrinsicParams<DefaultConfig, PlainTip>;
+pub type RuntimeApi = creditcoin::RuntimeApi<DefaultConfig, CreditcoinExtrinsicParams>;
+pub type RunResult = Result<()>;
 
 #[ext]
 #[async_trait]
@@ -26,7 +29,7 @@ pub impl<T: Config> Rpc<T> {
         storage_kind: StorageKind,
         key: &StorageKey,
     ) -> Result<Option<StorageData>, BasicError> {
-        let params = rpc_params![storage_kind.to_string(), key];
+        let params = rpc_params![storage_kind, key];
         let data = self
             .client
             .request("offchain_localStorageGet", params)
@@ -40,7 +43,7 @@ pub impl<T: Config> Rpc<T> {
         key: &StorageKey,
         value: &StorageData,
     ) -> Result<(), BasicError> {
-        let params = rpc_params![storage_kind.to_string(), key, value];
+        let params = rpc_params![storage_kind, key, value];
         self.client
             .request("offchain_localStorageSet", params)
             .await?;
@@ -61,5 +64,5 @@ pub impl<T: Config> Rpc<T> {
 
 #[async_trait]
 pub trait Run {
-    async fn run(self, api: &RuntimeApi) -> Result<()>;
+    async fn run(self, api: &RuntimeApi) -> RunResult;
 }

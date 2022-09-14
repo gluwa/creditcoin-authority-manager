@@ -1,12 +1,13 @@
-use crate::misc::StorageKind;
 use crate::misc::{url_to_value, Blockchain};
 use crate::RpcTExt;
+use crate::Run;
+use crate::RunResult;
 use crate::RuntimeApi;
+use crate::StorageKind;
 use async_trait::async_trait;
 use clap::Args;
 use color_eyre::Result;
 use parity_scale_codec::Decode;
-use crate::Run;
 
 #[derive(Debug, Clone, Args)]
 pub struct GetArgs {
@@ -24,19 +25,19 @@ pub struct SetArgs {
 
 #[async_trait]
 impl Run for GetArgs {
-    async fn run(self, api: &RuntimeApi) -> Result<()> {
+    async fn run(self, api: &RuntimeApi) -> RunResult {
         let Self { blockchain } = self;
 
         let value = get(api, blockchain).await?;
 
-        println!("{value}");
+        println!("{value:?}");
         Ok(())
     }
 }
 
 #[async_trait]
 impl Run for SetArgs {
-    async fn run(self, api: &RuntimeApi) -> Result<()> {
+    async fn run(self, api: &RuntimeApi) -> RunResult {
         let Self {
             blockchain,
             rpc_url,
@@ -46,13 +47,13 @@ impl Run for SetArgs {
 
         client
             .rpc()
-            .set_offchain_storage(StorageKind::Persistent, &key, &url_to_value(&rpc_url))
+            .set_offchain_storage(StorageKind::PERSISTENT, &key, &url_to_value(&rpc_url))
             .await?;
 
         assert_eq!(
             client
                 .rpc()
-                .offchain_storage(StorageKind::Persistent, &key)
+                .offchain_storage(StorageKind::PERSISTENT, &key)
                 .await?,
             Some(url_to_value(&rpc_url))
         );
@@ -62,18 +63,18 @@ impl Run for SetArgs {
     }
 }
 
-pub async fn get(api: &RuntimeApi, blockchain: Blockchain) -> Result<String> {
+pub async fn get(api: &RuntimeApi, blockchain: Blockchain) -> Result<Option<String>> {
     let key = blockchain.to_key();
 
     let value = api
         .client
         .rpc()
-        .offchain_storage(StorageKind::Persistent, &key)
+        .offchain_storage(StorageKind::PERSISTENT, &key)
         .await?;
 
     let value = match value {
-        Some(value) => String::decode(&mut value.0.as_slice())?,
-        None => "None".to_string(),
+        Some(value) => Some(String::decode(&mut value.0.as_slice())?),
+        None => None,
     };
 
     Ok(value)
