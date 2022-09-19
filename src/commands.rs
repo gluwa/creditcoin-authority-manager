@@ -17,6 +17,8 @@ pub mod get_set;
 use get_set::{get, GetArgs, SetArgs};
 pub mod log_filters;
 use log_filters::LogFilterCommand;
+pub mod nonce;
+use nonce::NonceCommand;
 
 #[derive(Debug, Clone, Subcommand)]
 pub enum Commands {
@@ -33,6 +35,9 @@ pub enum Commands {
     Account,
     /// Lists the configured RPC URLs for all blockchains.
     List,
+    /// Offchain Nonce directives.
+    #[clap(subcommand)]
+    Nonce(NonceCommand),
 }
 
 #[derive(Debug, Clone, Args)]
@@ -65,6 +70,7 @@ impl Run for Commands {
             List => list(api).await,
             Account => authority_account_command(api).await,
             LogFilter(log_filter) => log_filter.run(api).await,
+            Nonce(subcommand) => subcommand.run(api).await,
         }
     }
 }

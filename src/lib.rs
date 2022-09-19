@@ -4,6 +4,7 @@ use color_eyre::Result;
 use extend::ext;
 use subxt::{
     extrinsic::{BaseExtrinsicParams, PlainTip},
+    rpc::RpcError,
     DefaultConfig,
 };
 #[subxt::subxt(runtime_metadata_path = "./creditcoin-metadata.scale")]
@@ -59,6 +60,13 @@ pub impl<T: Config> Rpc<T> {
     async fn reset_log_filter(&self) -> Result<(), BasicError> {
         self.client.request("system_resetLogFilter", None).await?;
         Ok(())
+    }
+
+    async fn task_get_offchain_nonce_key(&self, hex_key: &str) -> Result<Vec<u8>, RpcError> {
+        let params = subxt::rpc::rpc_params!(hex_key);
+        self.client
+            .request("task_getOffchainNonceKey", params)
+            .await
     }
 }
 
