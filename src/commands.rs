@@ -20,6 +20,8 @@ use log_filters::LogFilterCommand;
 pub mod nonce;
 use nonce::NonceCommand;
 
+static KEYCHAIN_ID:&str = "gots";
+
 #[derive(Debug, Clone, Subcommand)]
 pub enum Commands {
     /// Get the currently configured RPC URL for a given blockchain.
@@ -109,7 +111,7 @@ async fn authority_account(api: &RuntimeApi) -> Result<Option<AccountId32>> {
         let has_key = api
             .client
             .rpc()
-            .has_key(Bytes(bytes.to_vec()), "ctcs".into())
+            .has_key(Bytes(bytes.to_vec()), KEYCHAIN_ID.into())
             .await?;
         if has_key {
             return Ok(Some(account_id));
@@ -127,14 +129,14 @@ impl Run for InsertArgs {
         } = self;
         let client = &api.client;
 
-        let public_bytes = Bytes(hex::decode(&public_hex.trim_start_matches("0x"))?);
+        let public_bytes = Bytes(hex::decode(public_hex.trim_start_matches("0x"))?);
 
         client
             .rpc()
-            .insert_key("ctcs".into(), suri, public_bytes.clone())
+            .insert_key(KEYCHAIN_ID.into(), suri, public_bytes.clone())
             .await?;
 
-        assert!(client.rpc().has_key(public_bytes, "ctcs".into()).await?);
+        assert!(client.rpc().has_key(public_bytes, KEYCHAIN_ID.into()).await?);
 
         println!("Inserted {}", public_hex);
         Ok(())

@@ -85,7 +85,7 @@ trait NonceCommons {
 
     async fn offchain_nonce_key(&self, rpc: &subxt::rpc::Rpc<DefaultConfig>) -> Result<Vec<u8>> {
         let acc = self.public_hex_or_ss58();
-        rpc.task_get_offchain_nonce_key(&acc)
+        rpc.task_get_offchain_nonce_key(acc)
             .await
             .map_err(|e| e.into())
     }
