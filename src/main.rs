@@ -2,7 +2,6 @@ use clap::Parser;
 use color_eyre::Result;
 use creditcoin_authority_manager::commands::Commands;
 use creditcoin_authority_manager::Run;
-use subxt::{ClientBuilder, DefaultConfig};
 
 #[derive(Debug, Clone, Parser)]
 struct Cli {
@@ -19,11 +18,7 @@ async fn main() -> Result<()> {
     sp_tracing::try_init_simple();
 
     let cli = Cli::parse();
-    let client = ClientBuilder::new()
-        .set_url(&cli.url)
-        .build::<DefaultConfig>()
-        .await?
-        .to_runtime_api();
+    let client = subxt::OnlineClient::from_url(&cli.url).await?;
     cli.command.run(&client).await?;
 
     Ok(())

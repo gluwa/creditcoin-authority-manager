@@ -1,8 +1,8 @@
 use crate::misc::{url_to_value, Blockchain};
+use crate::ApiClient;
 use crate::RpcTExt;
 use crate::Run;
 use crate::RunResult;
-use crate::RuntimeApi;
 use crate::StorageKind;
 use async_trait::async_trait;
 use clap::Args;
@@ -25,7 +25,7 @@ pub struct SetArgs {
 
 #[async_trait]
 impl Run for GetArgs {
-    async fn run(self, api: &RuntimeApi) -> RunResult {
+    async fn run(self, api: &ApiClient) -> RunResult {
         let Self { blockchain } = self;
 
         let value = get(api, blockchain).await?;
@@ -37,22 +37,19 @@ impl Run for GetArgs {
 
 #[async_trait]
 impl Run for SetArgs {
-    async fn run(self, api: &RuntimeApi) -> RunResult {
+    async fn run(self, api: &ApiClient) -> RunResult {
         let Self {
             blockchain,
             rpc_url,
         } = self;
         let key = blockchain.to_key();
-        let client = &api.client;
 
-        client
-            .rpc()
+        api.rpc()
             .set_offchain_storage(StorageKind::PERSISTENT, &key, &url_to_value(&rpc_url))
             .await?;
 
         assert_eq!(
-            client
-                .rpc()
+            api.rpc()
                 .offchain_storage(StorageKind::PERSISTENT, &key)
                 .await?,
             Some(url_to_value(&rpc_url))
@@ -63,11 +60,10 @@ impl Run for SetArgs {
     }
 }
 
-pub async fn get(api: &RuntimeApi, blockchain: Blockchain) -> Result<Option<String>> {
+pub async fn get(api: &ApiClient, blockchain: Blockchain) -> Result<Option<String>> {
     let key = blockchain.to_key();
 
     let value = api
-        .client
         .rpc()
         .offchain_storage(StorageKind::PERSISTENT, &key)
         .await?;
