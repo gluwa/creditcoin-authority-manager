@@ -132,7 +132,7 @@ impl Run for InsertArgs {
             suri, public_hex, ..
         } = self;
 
-        let public_bytes = Bytes(hex::decode(&public_hex.trim_start_matches("0x"))?);
+        let public_bytes = Bytes(hex::decode(public_hex.trim_start_matches("0x"))?);
 
         api.rpc()
             .insert_key(AUTH_KEY_ID.into(), suri, public_bytes.clone())
