@@ -1,24 +1,19 @@
-use crate::misc::Blockchain;
-use crate::Run;
-use crate::RunResult;
-use crate::RuntimeApi;
+use crate::{misc::Blockchain, ApiClient, Run, RunResult};
 use async_trait::async_trait;
 use clap::{Args, Subcommand};
 use color_eyre::Result;
 use futures::FutureExt;
 use parity_scale_codec::Decode;
-use sp_core::{
-    crypto::{AccountId32, Ss58Codec},
-    Bytes,
-};
+use sp_core::crypto::{AccountId32, Ss58Codec};
 use strum::IntoEnumIterator;
-use tabled::{TableIteratorExt, Tabled};
+use tabled::{Table, Tabled};
 pub mod get_set;
 use get_set::{get, GetArgs, SetArgs};
 pub mod log_filters;
 use log_filters::LogFilterCommand;
 pub mod nonce;
 use nonce::NonceCommand;
+use subxt::rpc::types::Bytes;
 
 #[derive(Debug, Clone, Subcommand)]
 pub enum Commands {
@@ -48,7 +43,7 @@ pub struct InsertArgs {
     public_hex: String,
 }
 
-async fn authority_account_command(api: &RuntimeApi) -> RunResult {
+async fn authority_account_command(api: &ApiClient) -> RunResult {
     println!(
         "{}",
         match authority_account(api).await? {
@@ -61,7 +56,7 @@ async fn authority_account_command(api: &RuntimeApi) -> RunResult {
 
 #[async_trait]
 impl Run for Commands {
-    async fn run(self, api: &RuntimeApi) -> RunResult {
+    async fn run(self, api: &ApiClient) -> RunResult {
         use Commands::*;
         match self {
             Get(get) => get.run(api).await,
@@ -83,7 +78,7 @@ struct RpcConfig {
     url: String,
 }
 
-async fn list(api: &RuntimeApi) -> RunResult {
+async fn list(api: &ApiClient) -> RunResult {
     let url_requests = Blockchain::iter().map(|blockchain| {
         get(api, blockchain).map(move |item| {
             item.map(|o| RpcConfig {
@@ -93,13 +88,25 @@ async fn list(api: &RuntimeApi) -> RunResult {
         })
     });
 
-    let configs = futures::future::try_join_all(url_requests).await?.table();
+    let configs = Table::new(futures::future::try_join_all(url_requests).await?);
     println!("{configs}");
     Ok(())
 }
 
-async fn authority_account(api: &RuntimeApi) -> Result<Option<AccountId32>> {
-    let mut authorities = api.storage().creditcoin().authorities_iter(None).await?;
+const AUTH_KEY_ID: &str = "gots";
+
+async fn authority_account(api: &ApiClient) -> Result<Option<AccountId32>> {
+    let mut authorities = api
+        .storage()
+        .at_latest()
+        .await?
+        .iter(
+            crate::creditcoin::storage()
+                .task_scheduler()
+                .authorities_root(),
+            26,
+        )
+        .await?;
 
     while let Some((key, ())) = authorities.next().await? {
         let len = key.0.len();
@@ -107,9 +114,8 @@ async fn authority_account(api: &RuntimeApi) -> Result<Option<AccountId32>> {
 
         let bytes: &[u8; 32] = account_id.as_ref();
         let has_key = api
-            .client
             .rpc()
-            .has_key(Bytes(bytes.to_vec()), "ctcs".into())
+            .has_key(Bytes(bytes.to_vec()), AUTH_KEY_ID.into())
             .await?;
         if has_key {
             return Ok(Some(account_id));
@@ -121,20 +127,18 @@ async fn authority_account(api: &RuntimeApi) -> Result<Option<AccountId32>> {
 
 #[async_trait]
 impl Run for InsertArgs {
-    async fn run(self, api: &RuntimeApi) -> RunResult {
+    async fn run(self, api: &ApiClient) -> RunResult {
         let Self {
             suri, public_hex, ..
         } = self;
-        let client = &api.client;
 
-        let public_bytes = Bytes(hex::decode(&public_hex.trim_start_matches("0x"))?);
+        let public_bytes = Bytes(hex::decode(public_hex.trim_start_matches("0x"))?);
 
-        client
-            .rpc()
-            .insert_key("ctcs".into(), suri, public_bytes.clone())
+        api.rpc()
+            .insert_key(AUTH_KEY_ID.into(), suri, public_bytes.clone())
             .await?;
 
-        assert!(client.rpc().has_key(public_bytes, "ctcs".into()).await?);
+        assert!(api.rpc().has_key(public_bytes, AUTH_KEY_ID.into()).await?);
 
         println!("Inserted {}", public_hex);
         Ok(())

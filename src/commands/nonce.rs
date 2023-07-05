@@ -1,9 +1,9 @@
-use crate::DefaultConfig;
+use crate::ApiClient;
+use crate::CreditcoinConfig;
 use crate::Result;
 use crate::RpcTExt;
 use crate::Run;
 use crate::RunResult;
-use crate::RuntimeApi;
 use crate::StorageKind;
 use async_trait::async_trait;
 use clap::{Args, Subcommand};
@@ -28,7 +28,7 @@ pub struct ResetArgs {
 
 #[async_trait]
 impl Run for NonceCommand {
-    async fn run(self, api: &RuntimeApi) -> RunResult {
+    async fn run(self, api: &ApiClient) -> RunResult {
         match self {
             Self::Reset(args) => args.run(api).await,
             Self::Show(args) => args.run(api).await,
@@ -41,8 +41,8 @@ impl Run for ResetArgs
 where
     ResetArgs: NonceCommons,
 {
-    async fn run(self, api: &RuntimeApi) -> RunResult {
-        let rpc = api.client.rpc();
+    async fn run(self, api: &ApiClient) -> RunResult {
+        let rpc = api.rpc();
         let nonce_key = self.offchain_nonce_key(rpc).await?;
         warn!(target: "task", "Resetting prev nonce for Account {}", self.public_hex_or_ss58());
 
@@ -68,8 +68,8 @@ impl Run for ShowArgs
 where
     ResetArgs: NonceCommons,
 {
-    async fn run(self, api: &RuntimeApi) -> RunResult {
-        let rpc = api.client.rpc();
+    async fn run(self, api: &ApiClient) -> RunResult {
+        let rpc = api.rpc();
         let nonce = self.offchain_nonce(rpc).await?;
         println!(
             "offchain nonce {nonce:?} for Account {}",
@@ -83,16 +83,16 @@ where
 trait NonceCommons {
     fn public_hex_or_ss58(&self) -> &String;
 
-    async fn offchain_nonce_key(&self, rpc: &subxt::rpc::Rpc<DefaultConfig>) -> Result<Vec<u8>> {
+    async fn offchain_nonce_key(&self, rpc: &subxt::rpc::Rpc<CreditcoinConfig>) -> Result<Vec<u8>> {
         let acc = self.public_hex_or_ss58();
-        rpc.task_get_offchain_nonce_key(&acc)
+        rpc.task_get_offchain_nonce_key(acc)
             .await
             .map_err(|e| e.into())
     }
 
     async fn offchain_nonce(
         &self,
-        rpc: &subxt::rpc::Rpc<DefaultConfig>,
+        rpc: &subxt::rpc::Rpc<CreditcoinConfig>,
     ) -> Result<Option<Result<u32, parity_scale_codec::Error>>> {
         let nonce_key = self.offchain_nonce_key(rpc).await?;
         let nonce = rpc
