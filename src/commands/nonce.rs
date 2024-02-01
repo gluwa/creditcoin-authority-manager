@@ -8,6 +8,7 @@ use crate::StorageKind;
 use async_trait::async_trait;
 use clap::{Args, Subcommand};
 use parity_scale_codec::Decode;
+use parity_scale_codec::Encode;
 use sp_core::storage::StorageData;
 use sp_core::storage::StorageKey;
 use sp_tracing::warn;
@@ -44,13 +45,17 @@ where
     async fn run(self, api: &ApiClient) -> RunResult {
         let rpc = api.rpc();
         let nonce_key = self.offchain_nonce_key(rpc).await?;
+        let on_chain_nonce = api
+            .rpc()
+            .system_account_next_index(&self.public_hex.clone())
+            .await?;
         warn!(target: "task", "Resetting prev nonce for Account {}", self.public_hex_or_ss58());
 
         //reset by emptying, the OCW backend will fail to decode the value on the next read, i.e. essentially a None.
         rpc.set_offchain_storage(
             StorageKind::PERSISTENT,
             &StorageKey(nonce_key.clone()),
-            &StorageData(vec![]),
+            &StorageData(on_chain_nonce.encode()),
         )
         .await?;
         Ok(())
